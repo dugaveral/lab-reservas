@@ -382,6 +382,30 @@ def descargar():
         )
 
     return render_template("descargar.html")
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    if request.method == 'POST':
+        clave = request.form.get('password')
+        if clave != "P4D3SADMIN*":
+            return render_template("error.html", mensaje="❌ Contraseña incorrecta.")
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT id, equipo, inicio, fin, usuario FROM reservas ORDER BY inicio")
+        reservas = cur.fetchall()
+        conn.close()
+        return render_template("admin.html", reservas=reservas)
+
+    return render_template("admin_login.html")
+
+@app.route('/admin/eliminar/<int:reserva_id>', methods=['POST'])
+def admin_eliminar_reserva(reserva_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM reservas WHERE id = %s', (reserva_id,))
+    conn.commit()
+    conn.close()
+    return redirect('/admin')
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
