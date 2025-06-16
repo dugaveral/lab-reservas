@@ -2,7 +2,9 @@ from flask import Flask, render_template, request, redirect
 import sqlite3
 
 app = Flask(__name__)
-init_db()
+
+with app.app_context():
+    init_db()
 
 def init_db():
     conn = sqlite3.connect('reservas.db')
