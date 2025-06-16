@@ -325,7 +325,14 @@ def ver_reservas():
     filtro_usuario = request.args.get('usuario')
     filtro_fecha = request.args.get('fecha')
 
-    query = "SELECT id, equipo, inicio, fin, usuario FROM reservas WHERE TRUE"
+    query = """
+        SELECT id, equipo,
+               TO_CHAR(inicio, 'YYYY-MM-DD HH24:MI'),
+               TO_CHAR(fin, 'YYYY-MM-DD HH24:MI'),
+               usuario
+        FROM reservas
+        WHERE TRUE
+    """
     params = []
 
     if filtro_equipo:

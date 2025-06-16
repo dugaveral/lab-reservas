@@ -41,8 +41,8 @@
           {% for r in reservas %}
           <tr class="border-t">
             <td class="px-4 py-2">{{ r[1] }}</td>
-            <td class="px-4 py-2">{{ r[2][:16].replace('T', ' ') }}</td>
-            <td class="px-4 py-2">{{ r[3][:16].replace('T', ' ') }}</td>
+            <td class="px-4 py-2">{{ r[2] }}</td>
+            <td class="px-4 py-2">{{ r[3] }}</td>
             <td class="px-4 py-2">{{ r[4] }}</td>
           </tr>
           {% else %}
