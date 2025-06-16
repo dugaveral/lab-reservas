@@ -1,5 +1,5 @@
 import os
-import sqlite3
+import psycopg2
 import random
 import string
 from flask import Flask, render_template, request, redirect, url_for, session
@@ -8,10 +8,13 @@ import sendgrid
 from sendgrid.helpers.mail import Mail
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'clave-secreta')
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'clave-super-secreta')
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "reservas.db")
+# Datos de conexión desde variables de entorno
+DB_URL = os.environ.get('DATABASE_URL')
+
+def conectar_db():
+    return psycopg2.connect(DB_URL)
 
 def generar_codigo():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
@@ -31,28 +34,28 @@ def enviar_correo(destinatario, codigo):
         print("Error al enviar correo:")
         traceback.print_exc()
 
-def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('''
+def crear_tabla_si_no_existe():
+    conn = conectar_db()
+    cur = conn.cursor()
+    cur.execute('''
         CREATE TABLE IF NOT EXISTS reservas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             equipo TEXT NOT NULL,
-            inicio TEXT NOT NULL,
-            fin TEXT NOT NULL,
+            inicio TIMESTAMP NOT NULL,
+            fin TIMESTAMP NOT NULL,
             usuario TEXT NOT NULL,
             codigo TEXT
-        )
+        );
     ''')
     conn.commit()
     conn.close()
 
 @app.route('/')
 def index():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('SELECT * FROM reservas ORDER BY inicio')
-    reservas = c.fetchall()
+    conn = conectar_db()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM reservas ORDER BY inicio')
+    reservas = cur.fetchall()
     conn.close()
     return render_template('index.html', reservas=reservas, usuario=None, fecha=None, equipo=None)
 
@@ -67,29 +70,28 @@ def reservar():
         correo = request.form['correo']
         codigo = generar_codigo()
 
-        inicio_str = f"{fecha} {hora}"
-        inicio_dt = datetime.strptime(inicio_str, "%Y-%m-%d %H:%M")
+        inicio_dt = datetime.strptime(f"{fecha} {hora}", "%Y-%m-%d %H:%M")
         fin_dt = inicio_dt + timedelta(hours=duracion_horas)
 
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-
-        # Validación estricta para evitar solapamiento
-        c.execute('''
+        conn = conectar_db()
+        cur = conn.cursor()
+        cur.execute('''
             SELECT * FROM reservas
-            WHERE equipo = ?
+            WHERE equipo = %s
             AND (
-                datetime(inicio) < datetime(?)
-                AND datetime(fin) > datetime(?)
+                inicio < %s
+                AND fin > %s
             )
-        ''', (equipo, fin_dt.isoformat(), inicio_dt.isoformat()))
-        solape = c.fetchone()
+        ''', (equipo, fin_dt, inicio_dt))
+        solape = cur.fetchone()
         if solape:
             conn.close()
             return render_template("error.html", mensaje="⚠️ Ya existe una reserva para ese equipo durante este periodo.")
 
-        c.execute('INSERT INTO reservas (equipo, inicio, fin, usuario, codigo) VALUES (?, ?, ?, ?, ?)',
-                  (equipo, inicio_dt.isoformat(), fin_dt.isoformat(), usuario, codigo))
+        cur.execute('''
+            INSERT INTO reservas (equipo, inicio, fin, usuario, codigo)
+            VALUES (%s, %s, %s, %s, %s)
+        ''', (equipo, inicio_dt, fin_dt, usuario, codigo))
         conn.commit()
         conn.close()
 
@@ -98,11 +100,10 @@ def reservar():
         session['codigo_reserva'] = codigo
         return redirect(url_for('mostrar_codigo'))
 
-    # Mostrar formulario con reservas existentes
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('SELECT equipo, inicio, fin, usuario FROM reservas ORDER BY equipo, inicio')
-    reservas = c.fetchall()
+    conn = conectar_db()
+    cur = conn.cursor()
+    cur.execute('SELECT equipo, inicio, fin, usuario FROM reservas ORDER BY equipo, inicio')
+    reservas = cur.fetchall()
     conn.close()
     return render_template('reservar.html', reservas=reservas)
 
@@ -117,10 +118,10 @@ def mostrar_codigo():
 def eliminar_reserva(reserva_id):
     codigo_ingresado = request.form['codigo'].strip().upper()
 
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('SELECT codigo FROM reservas WHERE id = ?', (reserva_id,))
-    resultado = c.fetchone()
+    conn = conectar_db()
+    cur = conn.cursor()
+    cur.execute('SELECT codigo FROM reservas WHERE id = %s', (reserva_id,))
+    resultado = cur.fetchone()
 
     if not resultado:
         conn.close()
@@ -129,7 +130,7 @@ def eliminar_reserva(reserva_id):
     codigo_real = resultado[0].strip().upper()
 
     if codigo_ingresado == codigo_real:
-        c.execute('DELETE FROM reservas WHERE id = ?', (reserva_id,))
+        cur.execute('DELETE FROM reservas WHERE id = %s', (reserva_id,))
         conn.commit()
         conn.close()
         return redirect('/')
@@ -137,5 +138,6 @@ def eliminar_reserva(reserva_id):
         conn.close()
         return render_template("error.html", mensaje="❌ Código incorrecto. No puedes eliminar esta reserva.")
 
+# Ejecuta solo una vez al iniciar la app para crear la tabla si no existe
 with app.app_context():
-    init_db()
+    crear_tabla_si_no_existe()
