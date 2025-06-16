@@ -359,7 +359,7 @@ def ver_reservas():
 def descargar():
     if request.method == 'POST':
         password = request.form.get('password')
-        if password != "P4D3SADMIN#*":
+        if password and password.strip() == "P4D3SADMIN#*":
             return render_template("error.html", mensaje="❌ Contraseña incorrecta para descargar.")
 
         conn = get_db_connection()
@@ -387,7 +387,7 @@ def descargar():
 def admin():
     if request.method == 'POST':
         clave = request.form.get('password')
-        if clave != "P4D3SADMIN*":
+        if password and password.strip() == "P4D3SADMIN#*":
             return render_template("error.html", mensaje="❌ Contraseña incorrecta.")
 
         conn = get_db_connection()
