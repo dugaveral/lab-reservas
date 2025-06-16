@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reservas de Equipos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <div class="max-w-3xl mx-auto p-4">
+    <h1 class="text-3xl font-bold">📋 Reservas de Equipos</h1>
+    <a href="/reservar" class="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded">
+      Nueva Reserva
+    </a>
+    <table class="table-auto w-full mt-6 bg-white shadow rounded">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="px-4 py-2">Equipo</th>
+          <th class="px-4 py-2">Fecha</th>
+          <th class="px-4 py-2">Hora</th>
+          <th class="px-4 py-2">Usuario</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reservas %}
+        <tr class="text-center border-t">
+          <td class="py-2">{{ r[1] }}</td>
+          <td class="py-2">{{ r[2] }}</td>
+          <td class="py-2">{{ r[3] }}</td>
+          <td class="py-2">{{ r[4] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
