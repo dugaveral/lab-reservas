@@ -17,7 +17,7 @@
         <select name="equipo" required class="w-full border p-2 rounded">
           <option disabled selected>Selecciona un equipo</option>
           {% for equipo in equipos %}
-            <option value="{{ equipo }}">{{ equipo }}</option>
+          <option value="{{ equipo }}">{{ equipo }}</option>
           {% endfor %}
         </select>
       </div>
@@ -55,24 +55,10 @@
       <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600">
         Reservar
       </button>
-
-      <div class="mt-6 text-center">
-        <a href="/reservas" class="text-blue-600 hover:underline block mb-2">🔎 Consultar reservas</a>
-        <a href="/descargar" class="text-green-600 hover:underline">📥 Descargar historial de reservas</a>
-      </div>
     </form>
 
-    <div class="mt-10">
-      <h2 class="text-lg font-bold mb-2">📋 Reservas existentes por equipo</h2>
-      {% set equipos_mostrados = [] %}
-      {% for equipo, reservas in reservas_por_equipo.items() %}
-        <h3 class="font-semibold mt-4 mb-1 text-blue-700">{{ equipo }}</h3>
-        <ul class="list-disc ml-6 text-sm">
-          {% for inicio, fin, usuario in reservas %}
-            <li>📅 {{ inicio.strftime('%Y-%m-%d %H:%M') }} → {{ fin.strftime('%Y-%m-%d %H:%M') }} – {{ usuario }}</li>
-          {% endfor %}
-        </ul>
-      {% endfor %}
+    <div class="mt-6 text-center">
+      <a href="/reservas" class="text-blue-600 hover:underline font-medium mt-4 inline-block">🔍 Consultar reservas</a>
     </div>
   </div>
 </body>
