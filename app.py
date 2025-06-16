@@ -2,12 +2,13 @@ import os
 import sqlite3
 import random
 import string
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, url_for, session
 from datetime import datetime, timedelta
 import sendgrid
 from sendgrid.helpers.mail import Mail
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'clave-secreta')
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "reservas.db")
@@ -18,7 +19,7 @@ def generar_codigo():
 def enviar_correo(destinatario, codigo):
     sg = sendgrid.SendGridAPIClient(api_key=os.environ.get('SENDGRID_API_KEY'))
     message = Mail(
-        from_email='tu-correo-verificado@tudominio.com',  # reemplaza por tu correo verificado en SendGrid
+        from_email='tu-correo-verificado@tudominio.com',  # reemplázalo por uno verificado
         to_emails=destinatario,
         subject='Tu código de reserva de laboratorio',
         html_content=f'<strong>Tu código secreto para eliminar la reserva es:</strong> {codigo}'
@@ -48,7 +49,7 @@ def index():
     c.execute('SELECT * FROM reservas ORDER BY inicio')
     reservas = c.fetchall()
     conn.close()
-    return render_template('index.html', reservas=reservas)
+    return render_template('index.html', reservas=reservas, usuario=None, fecha=None, equipo=None)
 
 @app.route('/reservar', methods=['GET', 'POST'])
 def reservar():
@@ -70,7 +71,10 @@ def reservar():
         c.execute('''
             SELECT * FROM reservas
             WHERE equipo = ?
-            AND (? < fin AND ? > inicio)
+            AND (
+                datetime(?) < datetime(fin)
+                AND datetime(?) > datetime(inicio)
+            )
         ''', (equipo, fin_dt.isoformat(), inicio_dt.isoformat()))
         solape = c.fetchone()
         if solape:
@@ -87,9 +91,24 @@ def reservar():
         except Exception as e:
             print("Error al enviar correo:", e)
 
-        return render_template("codigo.html", codigo=codigo)
+        session['codigo_reserva'] = codigo
+        return redirect(url_for('mostrar_codigo'))
 
-    return render_template('reservar.html')
+    # GET: mostrar formulario + reservas existentes
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT equipo, inicio, fin, usuario FROM reservas ORDER BY equipo, inicio')
+    reservas = c.fetchall()
+    conn.close()
+
+    return render_template('reservar.html', reservas=reservas)
+
+@app.route('/codigo')
+def mostrar_codigo():
+    codigo = session.get('codigo_reserva', None)
+    if not codigo:
+        return redirect('/')
+    return render_template('codigo.html', codigo=codigo)
 
 @app.route('/eliminar/<int:reserva_id>', methods=['POST'])
 def eliminar_reserva(reserva_id):

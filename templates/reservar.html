@@ -5,11 +5,12 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 text-gray-800">
-  <div class="max-w-md mx-auto p-6 bg-white shadow rounded mt-10">
+  <div class="max-w-2xl mx-auto p-6 bg-white shadow rounded mt-10">
     <img src="https://pades.com.co/wp-content/uploads/2024/03/cropped-cropped-Frame-36-300x234.png"
          alt="Grupo de investigación" class="mx-auto mb-4 rounded shadow w-48">
 
     <h1 class="text-2xl font-bold text-center mb-6">Reservar un Equipo</h1>
+
     <form method="POST" class="space-y-4">
       <div>
         <label class="block font-semibold">Equipo</label>
@@ -45,6 +46,21 @@
         Reservar
       </button>
     </form>
+
+    <div class="mt-10">
+      <h2 class="text-lg font-bold mb-2">📋 Reservas existentes por equipo</h2>
+      {% set equipos_mostrados = [] %}
+      {% for r in reservas %}
+        {% if r[0] not in equipos_mostrados %}
+          {% if not loop.first %}</ul>{% endif %}
+          <h3 class="font-semibold mt-4 mb-1 text-blue-700">{{ r[0] }}</h3>
+          <ul class="list-disc ml-6 text-sm">
+          {% set _ = equipos_mostrados.append(r[0]) %}
+        {% endif %}
+        <li>📅 {{ r[1].replace('T', ' ')[:16] }} → {{ r[2].replace('T', ' ')[:16] }} – {{ r[3] }}</li>
+      {% endfor %}
+      </ul>
+    </div>
   </div>
 </body>
 </html>
