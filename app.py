@@ -1,15 +1,18 @@
 import os
 import psycopg2
+import csv
+from io import StringIO
+from flask import Flask, render_template, request, redirect, Response
+from datetime import datetime, timedelta
 import random
 import string
-from flask import Flask, render_template, request, redirect
-from datetime import datetime, timedelta
 import sendgrid
 from sendgrid.helpers.mail import Mail
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev")
-DATABASE_URL = os.environ.get("DATABASE_URL")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")
+
+DB_URL = os.environ.get("DATABASE_URL")
 
 EQUIPOS_LISTA = [
   "Agitador De Cabezal",
@@ -228,16 +231,19 @@ def enviar_correo(destinatario, codigo):
     message = Mail(
         from_email='pades.reservas.laboratorios@gmail.com',
         to_emails=destinatario,
-        subject='Código de eliminación de tu reserva',
-        html_content=f'<strong>Tu código secreto para eliminar la reserva es:</strong> {codigo}'
+        subject='Código secreto para eliminar tu reserva',
+        html_content=f'<p>Tu código para eliminar la reserva es:</p><h2>{codigo}</h2>'
     )
     sg.send(message)
 
+def get_db_connection():
+    return psycopg2.connect(DB_URL)
+
 @app.route('/')
 def index():
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id, equipo, inicio, fin, usuario FROM reservas ORDER BY inicio")
+    cur.execute('SELECT id, equipo, inicio, fin, usuario FROM reservas ORDER BY inicio')
     reservas = cur.fetchall()
     conn.close()
     return render_template('index.html', reservas=reservas)
@@ -248,28 +254,26 @@ def reservar():
         equipo = request.form['equipo']
         fecha = request.form['fecha']
         hora = request.form['hora']
-        duracion = int(request.form['duracion'])
+        duracion_horas = int(request.form['duracion'])
         usuario = request.form['usuario']
         correo = request.form['correo']
         observaciones = request.form.get('observaciones', '')
         codigo = generar_codigo()
 
-        inicio_str = f"{fecha} {hora}"
-        inicio_dt = datetime.strptime(inicio_str, "%Y-%m-%d %H:%M")
-        fin_dt = inicio_dt + timedelta(hours=duracion)
+        inicio_dt = datetime.strptime(f"{fecha} {hora}", "%Y-%m-%d %H:%M")
+        fin_dt = inicio_dt + timedelta(hours=duracion_horas)
 
-        conn = psycopg2.connect(DATABASE_URL)
+        conn = get_db_connection()
         cur = conn.cursor()
-
         cur.execute("""
             SELECT * FROM reservas
-            WHERE equipo = %s AND (%s < fin AND %s > inicio)
+            WHERE equipo = %s
+            AND (%s < fin AND %s > inicio)
         """, (equipo, fin_dt, inicio_dt))
         conflicto = cur.fetchone()
-
         if conflicto:
             conn.close()
-            return render_template("error.html", mensaje="⚠️ Ya existe una reserva para ese equipo durante este periodo.")
+            return render_template("error.html", mensaje="⚠️ Ya existe una reserva para ese equipo en ese periodo.")
 
         cur.execute("""
             INSERT INTO reservas (equipo, inicio, fin, usuario, codigo, observaciones)
@@ -285,46 +289,93 @@ def reservar():
 
         return render_template("codigo.html", codigo=codigo)
 
-    # Mostrar reservas agrupadas por equipo con nombre del usuario
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT equipo, inicio, fin, usuario FROM reservas ORDER BY equipo, inicio")
-    datos = cur.fetchall()
+    registros = cur.fetchall()
     conn.close()
 
     reservas_por_equipo = {}
-    for equipo, inicio, fin, usuario in datos:
-        if equipo not in reservas_por_equipo:
-            reservas_por_equipo[equipo] = []
-        reservas_por_equipo[equipo].append((inicio, fin, usuario))
+    for equipo, inicio, fin, usuario in registros:
+        reservas_por_equipo.setdefault(equipo, []).append((inicio, fin, usuario))
 
-    return render_template('reservar.html',
-                           reservas_por_equipo=reservas_por_equipo,
-                           equipos=EQUIPOS_LISTA)
+    return render_template('reservar.html', equipos=EQUIPOS, reservas_por_equipo=reservas_por_equipo)
 
 @app.route('/eliminar/<int:reserva_id>', methods=['POST'])
 def eliminar_reserva(reserva_id):
-    codigo_ingresado = request.form['codigo'].strip().upper()
+    codigo = request.form['codigo'].strip().upper()
 
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT codigo FROM reservas WHERE id = %s", (reserva_id,))
+    cur.execute('SELECT codigo FROM reservas WHERE id = %s', (reserva_id,))
     resultado = cur.fetchone()
 
-    if not resultado:
-        conn.close()
-        return render_template("error.html", mensaje="❌ Reserva no encontrada.")
-
-    codigo_real = resultado[0].strip().upper()
-
-    if codigo_ingresado == codigo_real:
-        cur.execute("DELETE FROM reservas WHERE id = %s", (reserva_id,))
+    if resultado and resultado[0].strip().upper() == codigo:
+        cur.execute('DELETE FROM reservas WHERE id = %s', (reserva_id,))
         conn.commit()
-        conn.close()
-        return redirect('/')
+        mensaje = "✅ Reserva eliminada exitosamente."
     else:
+        mensaje = "❌ Código incorrecto. No puedes eliminar esta reserva."
+
+    conn.close()
+    return render_template("error.html", mensaje=mensaje)
+
+@app.route('/reservas')
+def ver_reservas():
+    filtro_equipo = request.args.get('equipo')
+    filtro_usuario = request.args.get('usuario')
+    filtro_fecha = request.args.get('fecha')
+
+    query = "SELECT id, equipo, inicio, fin, usuario FROM reservas WHERE TRUE"
+    params = []
+
+    if filtro_equipo:
+        query += " AND equipo ILIKE %s"
+        params.append(f"%{filtro_equipo}%")
+    if filtro_usuario:
+        query += " AND usuario ILIKE %s"
+        params.append(f"%{filtro_usuario}%")
+    if filtro_fecha:
+        query += " AND CAST(inicio AS DATE) = %s"
+        params.append(filtro_fecha)
+
+    query += " ORDER BY inicio"
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(query, params)
+    reservas = cur.fetchall()
+    conn.close()
+
+    return render_template("ver_reservas.html", reservas=reservas)
+
+@app.route('/descargar', methods=['GET', 'POST'])
+def descargar():
+    if request.method == 'POST':
+        password = request.form.get('password')
+        if password != "P4D3SRESERVAS#*":
+            return render_template("error.html", mensaje="❌ Contraseña incorrecta para descargar.")
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT id, equipo, inicio, fin, usuario, observaciones FROM reservas ORDER BY inicio")
+        rows = cur.fetchall()
         conn.close()
-        return render_template("error.html", mensaje="❌ Código incorrecto. No puedes eliminar esta reserva.")
+
+        output = StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['ID', 'Equipo', 'Inicio', 'Fin', 'Usuario', 'Observaciones'])
+        for row in rows:
+            writer.writerow(row)
+
+        output.seek(0)
+        return Response(
+            output,
+            mimetype='text/csv',
+            headers={"Content-Disposition": "attachment; filename=reservas.csv"}
+        )
+
+    return render_template("descargar.html")
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))

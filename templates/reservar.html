@@ -9,15 +9,15 @@
     <img src="https://pades.com.co/wp-content/uploads/2024/03/cropped-cropped-Frame-36-300x234.png"
          alt="Grupo de investigación" class="mx-auto mb-4 rounded shadow w-48">
 
-    <h1 class="text-2xl font-bold text-center mb-6">Reservar un Equipo</h1>
+    <h1 class="text-2xl font-bold text-center mb-6">Formato de reserva de equipos y materiales de los laboratorios</h1>
 
     <form method="POST" class="space-y-4">
       <div>
         <label class="block font-semibold">Equipo</label>
         <select name="equipo" required class="w-full border p-2 rounded">
           <option disabled selected>Selecciona un equipo</option>
-          {% for eq in equipos %}
-            <option value="{{ eq }}">{{ eq }}</option>
+          {% for equipo in equipos %}
+            <option value="{{ equipo }}">{{ equipo }}</option>
           {% endfor %}
         </select>
       </div>
@@ -49,7 +49,7 @@
 
       <div>
         <label class="block font-semibold">Observaciones (opcional)</label>
-        <textarea name="observaciones" rows="3" class="w-full border p-2 rounded" placeholder="Ej: necesito crisoles, soluciones, guantes..."></textarea>
+        <textarea name="observaciones" rows="3" class="w-full border p-2 rounded" placeholder="Ej: Necesito X cantidad de crisoles, soluciones, etc..."></textarea>
       </div>
 
       <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600">
@@ -57,17 +57,8 @@
       </button>
     </form>
 
-    <div class="mt-10">
-      <h2 class="text-lg font-bold mb-2">📋 Reservas existentes por equipo</h2>
-      {% set equipos_mostrados = [] %}
-      {% for equipo, reservas in reservas_por_equipo.items() %}
-        <h3 class="font-semibold mt-4 mb-1 text-blue-700">🔧 {{ equipo }}</h3>
-        <ul class="list-disc ml-6 text-sm">
-          {% for inicio, fin, usuario in reservas %}
-            <li>📅 {{ inicio.strftime('%Y-%m-%d %H:%M') }} → {{ fin.strftime('%Y-%m-%d %H:%M') }} – {{ usuario }}</li>
-          {% endfor %}
-        </ul>
-      {% endfor %}
+    <div class="mt-4 text-center">
+      <a href="/reservas" class="text-blue-600 underline text-sm">📄 Consultar reservas existentes</a>
     </div>
   </div>
 </body>
