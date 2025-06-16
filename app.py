@@ -10,7 +10,6 @@ from sendgrid.helpers.mail import Mail
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'clave-super-secreta')
 
-# Datos de conexión desde variables de entorno
 DB_URL = os.environ.get('DATABASE_URL')
 
 def conectar_db():
@@ -44,7 +43,8 @@ def crear_tabla_si_no_existe():
             inicio TIMESTAMP NOT NULL,
             fin TIMESTAMP NOT NULL,
             usuario TEXT NOT NULL,
-            codigo TEXT
+            codigo TEXT,
+            observaciones TEXT
         );
     ''')
     conn.commit()
@@ -57,7 +57,7 @@ def index():
     cur.execute('SELECT * FROM reservas ORDER BY inicio')
     reservas = cur.fetchall()
     conn.close()
-    return render_template('index.html', reservas=reservas, usuario=None, fecha=None, equipo=None)
+    return render_template('index.html', reservas=reservas)
 
 @app.route('/reservar', methods=['GET', 'POST'])
 def reservar():
@@ -68,6 +68,7 @@ def reservar():
         duracion_horas = int(request.form['duracion'])
         usuario = request.form['usuario']
         correo = request.form['correo']
+        observaciones = request.form.get('observaciones', '')
         codigo = generar_codigo()
 
         inicio_dt = datetime.strptime(f"{fecha} {hora}", "%Y-%m-%d %H:%M")
@@ -89,9 +90,9 @@ def reservar():
             return render_template("error.html", mensaje="⚠️ Ya existe una reserva para ese equipo durante este periodo.")
 
         cur.execute('''
-            INSERT INTO reservas (equipo, inicio, fin, usuario, codigo)
-            VALUES (%s, %s, %s, %s, %s)
-        ''', (equipo, inicio_dt, fin_dt, usuario, codigo))
+            INSERT INTO reservas (equipo, inicio, fin, usuario, codigo, observaciones)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        ''', (equipo, inicio_dt, fin_dt, usuario, codigo, observaciones))
         conn.commit()
         conn.close()
 
@@ -138,6 +139,5 @@ def eliminar_reserva(reserva_id):
         conn.close()
         return render_template("error.html", mensaje="❌ Código incorrecto. No puedes eliminar esta reserva.")
 
-# Ejecuta solo una vez al iniciar la app para crear la tabla si no existe
 with app.app_context():
     crear_tabla_si_no_existe()
