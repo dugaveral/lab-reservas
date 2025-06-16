@@ -407,6 +407,21 @@ def admin_eliminar_reserva(reserva_id):
     conn.close()
     return redirect('/admin')
 
+@app.route('/admin_login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        clave = request.form.get('clave')
+        if clave == "P4D3SADMIN#*":
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT id, equipo, inicio, fin, usuario FROM reservas ORDER BY inicio")
+            reservas = cur.fetchall()
+            conn.close()
+            return render_template("ver_reservas.html", reservas=reservas, admin=True)
+        else:
+            return render_template("error.html", mensaje="❌ Clave incorrecta.")
+    return render_template("admin_login.html")
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
