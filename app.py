@@ -10,7 +10,7 @@ import sendgrid
 from sendgrid.helpers.mail import Mail
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "laboratorio-reservas-pades"
 DB_URL = os.environ.get("DATABASE_URL")
 
 EQUIPOS_LISTA = [
