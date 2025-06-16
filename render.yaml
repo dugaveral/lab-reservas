@@ -2,5 +2,10 @@ services:
   - type: web
     name: lab-reservas
     env: python
-    buildCommand: ""
-    startCommand: python app.py
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    plan: free
+    envVars:
+      - key: SENDGRID_API_KEY
+        sync: false  # Lo defines manualmente en el dashboard de Render
