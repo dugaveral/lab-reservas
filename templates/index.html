@@ -18,6 +18,7 @@
           <th class="px-4 py-2">Inicio</th>
           <th class="px-4 py-2">Fin</th>
           <th class="px-4 py-2">Usuario</th>
+          <th class="px-4 py-2">Observaciones</th>
           <th class="px-4 py-2 text-center">Eliminar</th>
         </tr>
       </thead>
@@ -28,6 +29,7 @@
           <td class="py-2">{{ r[2].strftime('%Y-%m-%d %H:%M') }}</td>
           <td class="py-2">{{ r[3].strftime('%Y-%m-%d %H:%M') }}</td>
           <td class="py-2">{{ r[4] }}</td>
+          <td class="py-2 text-left text-sm">{{ r[6] }}</td>
           <td class="py-2">
             <form action="/eliminar/{{ r[0] }}" method="POST" class="flex flex-col items-center space-y-1">
               <input type="text" name="codigo" placeholder="Código" required class="border rounded px-2 py-1 text-sm w-28">
