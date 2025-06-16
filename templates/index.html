@@ -58,8 +58,8 @@
         {% for r in reservas %}
         <tr class="text-center border-t">
           <td class="py-2 equipo">{{ r[0] }}</td>
-          <td class="py-2 fecha">{{ r[1].replace('T', ' ')[:16] }}</td>
-          <td class="py-2">{{ r[2].replace('T', ' ')[:16] }}</td>
+          <td class="py-2 fecha">{{ r[1].strftime('%Y-%m-%d %H:%M') }}</td>
+          <td class="py-2">{{ r[2].strftime('%Y-%m-%d %H:%M') }}</td>
           <td class="py-2 usuario">{{ r[3] }}</td>
         </tr>
         {% endfor %}
