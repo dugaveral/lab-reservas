@@ -11,7 +11,6 @@ from sendgrid.helpers.mail import Mail
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY")
-
 DB_URL = os.environ.get("DATABASE_URL")
 
 EQUIPOS_LISTA = [
@@ -299,7 +298,7 @@ def reservar():
     for equipo, inicio, fin, usuario in registros:
         reservas_por_equipo.setdefault(equipo, []).append((inicio, fin, usuario))
 
-    return render_template('reservar.html', equipos=EQUIPOS, reservas_por_equipo=reservas_por_equipo)
+    return render_template('reservar.html', equipos=EQUIPOS_LISTA, reservas_por_equipo=reservas_por_equipo)
 
 @app.route('/eliminar/<int:reserva_id>', methods=['POST'])
 def eliminar_reserva(reserva_id):
