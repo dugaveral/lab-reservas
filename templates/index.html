@@ -19,11 +19,7 @@
         const coincideFecha = !fecha || fechaTexto.startsWith(fecha);
         const coincideEquipo = equipoTexto.includes(equipo);
 
-        if (coincideUsuario && coincideFecha && coincideEquipo) {
-          fila.style.display = "";
-        } else {
-          fila.style.display = "none";
-        }
+        fila.style.display = (coincideUsuario && coincideFecha && coincideEquipo) ? "" : "none";
       });
     }
   </script>
@@ -55,18 +51,18 @@
         </tr>
       </thead>
       <tbody>
-  	{% for r in reservas %}
-    	{% set inicio = r[1].strftime('%Y-%m-%d %H:%M') if r[1] is not string else r[1][:16].replace('T', ' ') %}
-    	{% set fin = r[2].strftime('%Y-%m-%d %H:%M') if r[2] is not string else r[2][:16].replace('T', ' ') %}
-    	<tr class="text-center border-t">
-    	  <td class="py-2 equipo">{{ r[0] }}</td>
-    	  <td class="py-2 fecha">{{ inicio }}</td>
-     	  <td class="py-2">{{ fin }}</td>
-          <td class="py-2 usuario">{{ r[3] }}</td>
-    	</tr>
-  	{% endfor %}
+        {% for r in reservas %}
+          {% set inicio = r[1].strftime('%Y-%m-%d %H:%M') if r[1] is not string else r[1][:16].replace('T', ' ') %}
+          {% set fin = r[2].strftime('%Y-%m-%d %H:%M') if r[2] is not string else r[2][:16].replace('T', ' ') %}
+          <tr class="text-center border-t">
+            <td class="py-2 equipo">{{ r[0] }}</td>
+            <td class="py-2 fecha">{{ inicio }}</td>
+            <td class="py-2">{{ fin }}</td>
+            <td class="py-2 usuario">{{ r[3] }}</td>
+          </tr>
+        {% endfor %}
       </tbody>
     </table>
   </div>
 </body>
-</html>	
+</html>

@@ -2,59 +2,34 @@ import os
 import psycopg2
 import random
 import string
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect
 from datetime import datetime, timedelta
 import sendgrid
 from sendgrid.helpers.mail import Mail
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'clave-super-secreta')
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev")
 
-DB_URL = os.environ.get('DATABASE_URL')
-
-def conectar_db():
-    return psycopg2.connect(DB_URL)
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def generar_codigo():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
 def enviar_correo(destinatario, codigo):
-    try:
-        sg = sendgrid.SendGridAPIClient(api_key=os.environ.get('SENDGRID_API_KEY'))
-        message = Mail(
-            from_email='pades.reservas.laboratorios@gmail.com',
-            to_emails=destinatario,
-            subject='Tu código de reserva de laboratorio',
-            html_content=f'<strong>Tu código secreto para eliminar la reserva es:</strong> {codigo}'
-        )
-        sg.send(message)
-    except Exception as e:
-        import traceback
-        print("Error al enviar correo:")
-        traceback.print_exc()
-
-def crear_tabla_si_no_existe():
-    conn = conectar_db()
-    cur = conn.cursor()
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS reservas (
-            id SERIAL PRIMARY KEY,
-            equipo TEXT NOT NULL,
-            inicio TIMESTAMP NOT NULL,
-            fin TIMESTAMP NOT NULL,
-            usuario TEXT NOT NULL,
-            codigo TEXT,
-            observaciones TEXT
-        );
-    ''')
-    conn.commit()
-    conn.close()
+    sg = sendgrid.SendGridAPIClient(api_key=os.environ.get('SENDGRID_API_KEY'))
+    message = Mail(
+        from_email='pades.reservas.laboratorios@gmail.com',
+        to_emails=destinatario,
+        subject='Código de eliminación de tu reserva',
+        html_content=f'<strong>Tu código secreto para eliminar la reserva es:</strong> {codigo}'
+    )
+    sg.send(message)
 
 @app.route('/')
 def index():
-    conn = conectar_db()
+    conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
-    cur.execute('SELECT * FROM reservas ORDER BY inicio')
+    cur.execute("SELECT equipo, inicio, fin, usuario FROM reservas ORDER BY inicio")
     reservas = cur.fetchall()
     conn.close()
     return render_template('index.html', reservas=reservas)
@@ -65,63 +40,52 @@ def reservar():
         equipo = request.form['equipo']
         fecha = request.form['fecha']
         hora = request.form['hora']
-        duracion_horas = int(request.form['duracion'])
+        duracion = int(request.form['duracion'])
         usuario = request.form['usuario']
         correo = request.form['correo']
         observaciones = request.form.get('observaciones', '')
         codigo = generar_codigo()
 
-        inicio_dt = datetime.strptime(f"{fecha} {hora}", "%Y-%m-%d %H:%M")
-        fin_dt = inicio_dt + timedelta(hours=duracion_horas)
+        inicio_str = f"{fecha} {hora}"
+        inicio_dt = datetime.strptime(inicio_str, "%Y-%m-%d %H:%M")
+        fin_dt = inicio_dt + timedelta(hours=duracion)
 
-        conn = conectar_db()
+        conn = psycopg2.connect(DATABASE_URL)
         cur = conn.cursor()
-        cur.execute('''
+
+        cur.execute("""
             SELECT * FROM reservas
-            WHERE equipo = %s
-            AND (
-                inicio < %s
-                AND fin > %s
-            )
-        ''', (equipo, fin_dt, inicio_dt))
-        solape = cur.fetchone()
-        if solape:
+            WHERE equipo = %s AND (%s < fin AND %s > inicio)
+        """, (equipo, fin_dt, inicio_dt))
+
+        conflicto = cur.fetchone()
+        if conflicto:
             conn.close()
             return render_template("error.html", mensaje="⚠️ Ya existe una reserva para ese equipo durante este periodo.")
 
-        cur.execute('''
+        cur.execute("""
             INSERT INTO reservas (equipo, inicio, fin, usuario, codigo, observaciones)
             VALUES (%s, %s, %s, %s, %s, %s)
-        ''', (equipo, inicio_dt, fin_dt, usuario, codigo, observaciones))
+        """, (equipo, inicio_dt, fin_dt, usuario, codigo, observaciones))
         conn.commit()
         conn.close()
 
-        enviar_correo(correo, codigo)
+        try:
+            enviar_correo(correo, codigo)
+        except Exception as e:
+            print("Error al enviar correo:", e)
 
-        session['codigo_reserva'] = codigo
-        return redirect(url_for('mostrar_codigo'))
+        return render_template("codigo.html", codigo=codigo)
 
-    conn = conectar_db()
-    cur = conn.cursor()
-    cur.execute('SELECT equipo, inicio, fin, usuario FROM reservas ORDER BY equipo, inicio')
-    reservas = cur.fetchall()
-    conn.close()
-    return render_template('reservar.html', reservas=reservas)
-
-@app.route('/codigo')
-def mostrar_codigo():
-    codigo = session.get('codigo_reserva', None)
-    if not codigo:
-        return redirect('/')
-    return render_template('codigo.html', codigo=codigo)
+    return render_template('reservar.html')
 
 @app.route('/eliminar/<int:reserva_id>', methods=['POST'])
 def eliminar_reserva(reserva_id):
     codigo_ingresado = request.form['codigo'].strip().upper()
 
-    conn = conectar_db()
+    conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
-    cur.execute('SELECT codigo FROM reservas WHERE id = %s', (reserva_id,))
+    cur.execute("SELECT codigo FROM reservas WHERE id = %s", (reserva_id,))
     resultado = cur.fetchone()
 
     if not resultado:
@@ -131,7 +95,7 @@ def eliminar_reserva(reserva_id):
     codigo_real = resultado[0].strip().upper()
 
     if codigo_ingresado == codigo_real:
-        cur.execute('DELETE FROM reservas WHERE id = %s', (reserva_id,))
+        cur.execute("DELETE FROM reservas WHERE id = %s", (reserva_id,))
         conn.commit()
         conn.close()
         return redirect('/')
@@ -139,5 +103,6 @@ def eliminar_reserva(reserva_id):
         conn.close()
         return render_template("error.html", mensaje="❌ Código incorrecto. No puedes eliminar esta reserva.")
 
-with app.app_context():
-    crear_tabla_si_no_existe()
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
