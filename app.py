@@ -2,7 +2,7 @@ import os
 import psycopg2
 import csv
 from io import StringIO
-from flask import Flask, render_template, request, redirect, Response
+from flask import Flask, render_template, request, redirect, Response, session
 from datetime import datetime, timedelta
 import random
 import string
@@ -388,16 +388,11 @@ def admin_login():
     if request.method == 'POST':
         password = request.form.get('password')
         if password.strip() == "P4D3SADMIN#*":
-            conn = get_db_connection()
-            cur = conn.cursor()
-            cur.execute("SELECT id, equipo, inicio, fin, usuario FROM reservas ORDER BY inicio")
-            reservas = cur.fetchall()
-            conn.close()
-            return render_template("ver_reservas.html", reservas=reservas, admin=True)
+            session['admin'] = True  # ⚠️ Activa sesión admin
+            return redirect('/admin')
         else:
-            return render_template("error.html", mensaje="❌ Contraseña incorrecta para el modo administrador.")
+            return render_template("error.html", mensaje="❌ Contraseña incorrecta.")
     return render_template("admin_login.html")
-
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
@@ -405,24 +400,35 @@ def admin():
         password = request.form.get('password')
         if not password or password.strip() != "P4D3SADMIN#*":
             return render_template("error.html", mensaje="❌ Contraseña incorrecta.")
+        session['admin'] = True  # activa modo admin
+        return redirect('/admin')
 
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT id, equipo, inicio, fin, usuario FROM reservas ORDER BY inicio")
-        reservas = cur.fetchall()
-        conn.close()
-        return render_template("ver_reservas.html", reservas=reservas, admin=True)
+    if not session.get('admin'):
+        return render_template("admin_login.html")
 
-    return render_template("admin_login.html")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, equipo, inicio, fin, usuario FROM reservas ORDER BY inicio")
+    reservas = cur.fetchall()
+    conn.close()
+    return render_template("ver_reservas.html", reservas=reservas, admin=True)
 
 @app.route('/admin/eliminar/<int:reserva_id>', methods=['POST'])
 def admin_eliminar_reserva(reserva_id):
+    if not session.get('admin'):
+        return redirect('/admin_login')
+
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('DELETE FROM reservas WHERE id = %s', (reserva_id,))
     conn.commit()
     conn.close()
     return redirect('/admin')
+
+@app.route('/admin_logout')
+def admin_logout():
+    session.pop('admin', None)
+    return redirect('/reservas')
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
