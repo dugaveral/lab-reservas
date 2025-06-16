@@ -17,14 +17,19 @@ def generar_codigo():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
 def enviar_correo(destinatario, codigo):
-    sg = sendgrid.SendGridAPIClient(api_key=os.environ.get('SENDGRID_API_KEY'))
-    message = Mail(
-        from_email='tu-correo-verificado@tudominio.com',  # reemplázalo por uno verificado
-        to_emails=destinatario,
-        subject='Tu código de reserva de laboratorio',
-        html_content=f'<strong>Tu código secreto para eliminar la reserva es:</strong> {codigo}'
-    )
-    sg.send(message)
+    try:
+        sg = sendgrid.SendGridAPIClient(api_key=os.environ.get('SENDGRID_API_KEY'))
+        message = Mail(
+            from_email='pades.reservas.laboratorios@gmail.com',
+            to_emails=destinatario,
+            subject='Tu código de reserva de laboratorio',
+            html_content=f'<strong>Tu código secreto para eliminar la reserva es:</strong> {codigo}'
+        )
+        sg.send(message)
+    except Exception as e:
+        import traceback
+        print("Error al enviar correo:")
+        traceback.print_exc()
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -68,12 +73,14 @@ def reservar():
 
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
+
+        # Validación estricta para evitar solapamiento
         c.execute('''
             SELECT * FROM reservas
             WHERE equipo = ?
             AND (
-                datetime(?) < datetime(fin)
-                AND datetime(?) > datetime(inicio)
+                datetime(inicio) < datetime(?)
+                AND datetime(fin) > datetime(?)
             )
         ''', (equipo, fin_dt.isoformat(), inicio_dt.isoformat()))
         solape = c.fetchone()
@@ -86,21 +93,17 @@ def reservar():
         conn.commit()
         conn.close()
 
-        try:
-            enviar_correo(correo, codigo)
-        except Exception as e:
-            print("Error al enviar correo:", e)
+        enviar_correo(correo, codigo)
 
         session['codigo_reserva'] = codigo
         return redirect(url_for('mostrar_codigo'))
 
-    # GET: mostrar formulario + reservas existentes
+    # Mostrar formulario con reservas existentes
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('SELECT equipo, inicio, fin, usuario FROM reservas ORDER BY equipo, inicio')
     reservas = c.fetchall()
     conn.close()
-
     return render_template('reservar.html', reservas=reservas)
 
 @app.route('/codigo')
