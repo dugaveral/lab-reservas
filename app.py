@@ -3,6 +3,7 @@ import sqlite3
 import random
 import string
 from flask import Flask, render_template, request, redirect
+from datetime import datetime, timedelta
 import sendgrid
 from sendgrid.helpers.mail import Mail
 
@@ -17,10 +18,10 @@ def generar_codigo():
 def enviar_correo(destinatario, codigo):
     sg = sendgrid.SendGridAPIClient(api_key=os.environ.get('SENDGRID_API_KEY'))
     message = Mail(
-        from_email='pades.reservas.laboratorios@gmail.com',  # reemplaza con tu correo verificado
+        from_email='tu-correo-verificado@tudominio.com',  # reemplaza por tu correo verificado en SendGrid
         to_emails=destinatario,
         subject='Tu código de reserva de laboratorio',
-        html_content=f'<strong>Tu código secreto es:</strong> {codigo}'
+        html_content=f'<strong>Tu código secreto para eliminar la reserva es:</strong> {codigo}'
     )
     sg.send(message)
 
@@ -31,8 +32,8 @@ def init_db():
         CREATE TABLE IF NOT EXISTS reservas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             equipo TEXT NOT NULL,
-            fecha TEXT NOT NULL,
-            hora TEXT NOT NULL,
+            inicio TEXT NOT NULL,
+            fin TEXT NOT NULL,
             usuario TEXT NOT NULL,
             codigo TEXT
         )
@@ -44,7 +45,7 @@ def init_db():
 def index():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute('SELECT * FROM reservas ORDER BY fecha, hora')
+    c.execute('SELECT * FROM reservas ORDER BY inicio')
     reservas = c.fetchall()
     conn.close()
     return render_template('index.html', reservas=reservas)
@@ -55,21 +56,29 @@ def reservar():
         equipo = request.form['equipo']
         fecha = request.form['fecha']
         hora = request.form['hora']
+        duracion_horas = int(request.form['duracion'])
         usuario = request.form['usuario']
         correo = request.form['correo']
         codigo = generar_codigo()
 
+        inicio_str = f"{fecha} {hora}"
+        inicio_dt = datetime.strptime(inicio_str, "%Y-%m-%d %H:%M")
+        fin_dt = inicio_dt + timedelta(hours=duracion_horas)
+
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute('SELECT * FROM reservas WHERE equipo=? AND fecha=? AND hora=?',
-                  (equipo, fecha, hora))
+        c.execute('''
+            SELECT * FROM reservas
+            WHERE equipo = ?
+            AND (? < fin AND ? > inicio)
+        ''', (equipo, fin_dt.isoformat(), inicio_dt.isoformat()))
         solape = c.fetchone()
         if solape:
             conn.close()
-            return render_template("error.html", mensaje="⚠️ Ya existe una reserva para ese equipo en ese horario.")
+            return render_template("error.html", mensaje="⚠️ Ya existe una reserva para ese equipo durante este periodo.")
 
-        c.execute('INSERT INTO reservas (equipo, fecha, hora, usuario, codigo) VALUES (?, ?, ?, ?, ?)',
-                  (equipo, fecha, hora, usuario, codigo))
+        c.execute('INSERT INTO reservas (equipo, inicio, fin, usuario, codigo) VALUES (?, ?, ?, ?, ?)',
+                  (equipo, inicio_dt.isoformat(), fin_dt.isoformat(), usuario, codigo))
         conn.commit()
         conn.close()
 
