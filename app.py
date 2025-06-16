@@ -359,7 +359,7 @@ def ver_reservas():
 def descargar():
     if request.method == 'POST':
         password = request.form.get('password')
-        if password and password.strip() == "P4D3SADMIN#*":
+        if not password or password.strip() != "P4D3SADMIN#*":
             return render_template("error.html", mensaje="❌ Contraseña incorrecta para descargar.")
 
         conn = get_db_connection()
@@ -386,8 +386,8 @@ def descargar():
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     if request.method == 'POST':
-        clave = request.form.get('password')
-        if password and password.strip() == "P4D3SADMIN#*":
+        password = request.form.get('password')
+        if not password or password.strip() != "P4D3SADMIN#*":
             return render_template("error.html", mensaje="❌ Contraseña incorrecta.")
 
         conn = get_db_connection()
@@ -395,7 +395,7 @@ def admin():
         cur.execute("SELECT id, equipo, inicio, fin, usuario FROM reservas ORDER BY inicio")
         reservas = cur.fetchall()
         conn.close()
-        return render_template("admin.html", reservas=reservas)
+        return render_template("ver_reservas.html", reservas=reservas, admin=True)
 
     return render_template("admin_login.html")
 
