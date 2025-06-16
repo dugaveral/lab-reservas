@@ -5,81 +5,88 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     function mostrarReservasEquipo() {
-      const equipo = document.getElementById("equipo").value;
+      const equipoSeleccionado = document.getElementById("equipo").value;
       const secciones = document.querySelectorAll(".reserva-equipo");
       secciones.forEach(sec => {
-        if (sec.dataset.equipo === equipo) {
-          sec.classList.remove("hidden");
-        } else {
-          sec.classList.add("hidden");
-        }
+        sec.style.display = (sec.dataset.equipo === equipoSeleccionado) ? "block" : "none";
       });
     }
   </script>
 </head>
 <body class="bg-gray-100 text-gray-800">
-  <div class="max-w-3xl mx-auto p-4">
-    <h1 class="text-3xl font-bold mb-4">➕ Nueva Reserva</h1>
-    
-    <form method="post" class="bg-white p-6 rounded shadow space-y-4">
+  <div class="max-w-5xl mx-auto p-6 bg-white shadow rounded mt-10">
+
+    <div class="flex justify-center mb-6">
+      <img src="https://pades.com.co/wp-content/uploads/2024/03/cropped-cropped-Frame-36-300x234.png"
+           alt="Grupo de investigación" class="rounded shadow-md max-h-40" />
+    </div>
+
+    <h1 class="text-2xl font-bold text-center mb-6">Reservar un Equipo</h1>
+
+    <form method="POST" class="space-y-4">
       <div>
-        <label for="equipo" class="block font-semibold">Equipo:</label>
-        <select name="equipo" id="equipo" onchange="mostrarReservasEquipo()" required class="w-full border p-2 rounded">
-          <option value="" disabled selected>Selecciona un equipo</option>
-          {% for equipo in reservas_por_equipo %}
-            <option value="{{ equipo }}">{{ equipo }}</option>
+        <label class="block font-semibold">Equipo</label>
+        <select name="equipo" id="equipo" required onchange="mostrarReservasEquipo()" class="w-full border p-2 rounded">
+          <option disabled selected>Selecciona un equipo</option>
+          {% for nombre in equipos %}
+            <option value="{{ nombre }}">{{ nombre }}</option>
           {% endfor %}
         </select>
       </div>
-      
+
       <div>
-        <label for="fecha" class="block font-semibold">Fecha:</label>
-        <input type="date" name="fecha" required class="w-full border p-2 rounded" />
+        <label class="block font-semibold">Fecha de inicio</label>
+        <input type="date" name="fecha" required class="w-full border p-2 rounded">
       </div>
 
       <div>
-        <label for="hora" class="block font-semibold">Hora:</label>
-        <input type="time" name="hora" required class="w-full border p-2 rounded" />
+        <label class="block font-semibold">Hora de inicio</label>
+        <input type="time" name="hora" required class="w-full border p-2 rounded">
       </div>
 
       <div>
-        <label for="duracion" class="block font-semibold">Duración (en horas):</label>
-        <input type="number" name="duracion" min="1" required class="w-full border p-2 rounded" />
+        <label class="block font-semibold">Duración (en horas)</label>
+        <input type="number" name="duracion" min="1" required class="w-full border p-2 rounded">
       </div>
 
       <div>
-        <label for="usuario" class="block font-semibold">Nombre del usuario:</label>
-        <input type="text" name="usuario" required class="w-full border p-2 rounded" />
+        <label class="block font-semibold">Tu nombre</label>
+        <input type="text" name="usuario" required class="w-full border p-2 rounded">
       </div>
 
       <div>
-        <label for="correo" class="block font-semibold">Correo electrónico:</label>
-        <input type="email" name="correo" required class="w-full border p-2 rounded" />
+        <label class="block font-semibold">Tu correo</label>
+        <input type="email" name="correo" required class="w-full border p-2 rounded">
       </div>
 
       <div>
-        <label for="observaciones" class="block font-semibold">Observaciones:</label>
-        <textarea name="observaciones" class="w-full border p-2 rounded" rows="3" placeholder="Ej: necesito crisoles, soluciones, etc."></textarea>
+        <label class="block font-semibold">Observaciones (opcional)</label>
+        <textarea name="observaciones" rows="3" class="w-full border p-2 rounded"
+                  placeholder="Ej: necesito crisoles, soluciones, guantes..."></textarea>
       </div>
 
-      <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">Reservar</button>
+      <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600">
+        Reservar
+      </button>
     </form>
 
-    <div class="mt-8">
-      <h2 class="text-2xl font-semibold mb-2">📅 Reservas existentes por equipo</h2>
+    <div class="mt-10">
+      <h2 class="text-lg font-bold mb-4">📋 Reservas existentes</h2>
       {% for equipo, reservas in reservas_por_equipo.items() %}
         <div class="reserva-equipo hidden" data-equipo="{{ equipo }}">
-          <h3 class="text-xl font-bold mt-4 mb-2">{{ equipo }}</h3>
-          <ul class="list-disc pl-6">
+          <h3 class="text-blue-700 font-semibold">{{ equipo }}</h3>
+          <ul class="list-disc ml-6 text-sm">
             {% for inicio, fin in reservas %}
-              <li>{{ inicio.strftime('%Y-%m-%d %H:%M') }} → {{ fin.strftime('%Y-%m-%d %H:%M') }}</li>
+              <li>📅 {{ inicio.strftime('%Y-%m-%d %H:%M') }} → {{ fin.strftime('%Y-%m-%d %H:%M') }}</li>
             {% endfor %}
           </ul>
         </div>
       {% endfor %}
     </div>
 
-    <a href="/" class="inline-block mt-6 text-blue-600 hover:underline">⬅️ Volver al inicio</a>
+    <div class="text-center mt-6">
+      <a href="/" class="text-blue-600 hover:underline">⬅️ Volver al inicio</a>
+    </div>
   </div>
 </body>
 </html>

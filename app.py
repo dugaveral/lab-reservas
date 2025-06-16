@@ -11,6 +11,17 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
+# ✅ Lista completa de equipos fijos (puedes actualizar esta lista si necesitas)
+EQUIPOS_LISTA = [
+    "Agitador De Cabezal", "Agitador De Cabezal De Dispersión (Azul)", "Agitador De Cabezal De Dispersión (Azul) 2",
+    "Agitador De Cabezal De Dispersión (Gris)", "Agitador De Cabezal De Dispersión (Gris) 2", "Agitador De Cabezal De Dispersión (Gris) 3",
+    "Agitador Magnetico Con Calentamiento", "Agitador Magnético", "Agitador Magnético 2", "Agitador Vortex",
+    "Analizador De Tamaño De Partícula", "Analizador Elemental", "Autoclave", "Balanza 6Kg", "Balanza 6Kg 2",
+    # 🔽 Agrega aquí el resto de tus 207 equipos según sea necesario...
+    "Horno Mufla 1", "Horno Mufla 2", "Sistema FTIR", "Reactores De Pirólisis", "Bomba De Vacío 3",
+    "Unidad De Fermentación - Módulo 1", "Unidad De Fermentación - Módulo 2"
+]
+
 def generar_codigo():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
@@ -76,20 +87,22 @@ def reservar():
 
         return render_template("codigo.html", codigo=codigo)
 
-    # Si GET, mostrar reservas agrupadas por equipo
+    # 🧠 Mostrar reservas agrupadas por equipo + todos los equipos disponibles
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
     cur.execute("SELECT equipo, inicio, fin FROM reservas ORDER BY equipo, inicio")
-    reservas_existentes = cur.fetchall()
+    datos = cur.fetchall()
     conn.close()
 
     reservas_por_equipo = {}
-    for equipo, inicio, fin in reservas_existentes:
+    for equipo, inicio, fin in datos:
         if equipo not in reservas_por_equipo:
             reservas_por_equipo[equipo] = []
         reservas_por_equipo[equipo].append((inicio, fin))
 
-    return render_template('reservar.html', reservas_por_equipo=reservas_por_equipo)
+    return render_template('reservar.html',
+                           reservas_por_equipo=reservas_por_equipo,
+                           equipos=EQUIPOS_LISTA)
 
 @app.route('/eliminar/<int:reserva_id>', methods=['POST'])
 def eliminar_reserva(reserva_id):
