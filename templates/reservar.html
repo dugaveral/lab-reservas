@@ -5,7 +5,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 text-gray-800">
-  <div class="max-w-2xl mx-auto p-6 bg-white shadow rounded mt-10">
+  <div class="max-w-4xl mx-auto p-6 bg-white shadow rounded mt-10">
     <img src="https://pades.com.co/wp-content/uploads/2024/03/cropped-cropped-Frame-36-300x234.png"
          alt="Grupo de investigación" class="mx-auto mb-4 rounded shadow w-48">
 
@@ -15,37 +15,97 @@
       <div>
         <label class="block font-semibold">Equipo</label>
         <select name="equipo" required class="w-full border p-2 rounded">
-          <option>Horno de convección</option>
-          <option>Estufa de secado</option>
-          <option>Reactores de pirólisis</option>
-          <option>Analizador de humedad</option>
-          <option>Baño ultrasónico</option>
+          <option disabled selected>Selecciona un equipo</option>
+          <option>Horno 1</option>
+          <option>Horno 2</option>
+          <option>Horno 3</option>
+          <option>Horno 4</option>
+          <option>Horno 5</option>
+          <option>Horno 6</option>
+          <option>Horno 7</option>
+          <option>Horno Mufla 1</option>
+          <option>Horno Mufla 2</option>
+          <option>Horno De Materia Volátil</option>
+          <option>Estufa De Secado</option>
+          <option>Baño Ultrasónico</option>
+          <option>Reactor Multiproposito</option>
+          <option>Reactores De Pirólisis</option>
+          <option>Analizador De Humedad</option>
+          <option>Baño Termostatado</option>
+          <option>Batidora De 4.3 Litros 1</option>
+          <option>Batidora De 4.3 Litros 2</option>
+          <option>Batidora Marca</option>
+          <option>Cámara De Fermentación 1</option>
+          <option>Cámara De Fermentación 2</option>
+          <option>Molino Para Carnes</option>
+          <option>Homogeneizador 1</option>
+          <option>Homogeneizador 2</option>
+          <option>Refractómetro Digital 1</option>
+          <option>Refractómetro Digital 2</option>
+          <option>Destilador De Agua</option>
+          <option>Empacadora Al Vacío</option>
+          <option>Molino Multiusos 1</option>
+          <option>Molino Multiusos 2</option>
+          <option>Unidad De Fermentación - Módulo 1</option>
+          <option>Unidad De Fermentación - Módulo 2</option>
+          <option>Unidad De DSC Set Line</option>
+          <option>Unidad Ups</option>
+          <option>Unidad De Secado Tipo Spray Vibrasec Sas</option>
+          <option>Unidad Extrusión De Bioplásticos Bausano</option>
+          <option>Unidad De Extrusión De Almidones Kecon</option>
+          <option>Tanque De Mezclado De Soluciones De Glucosa En Acero Inoxidable</option>
+          <option>Tanque De Afrecho Cónico Construido En Acero Inoxidable 304</option>
+          <option>Tanque Recolector De La Picadora En Acero Inoxidable</option>
+          <option>Tanque Recolector De Lavadora En Acero Inoxidable</option>
+          <option>Tanque De Alimentación Para Recirculación Y Almacenamiento De Almidón Con Sistema De Agitación</option>
+          <option>Compresor Medic Air De 108 Litros</option>
+          <option>Compresor Elite</option>
+          <option>Sensor</option>
+          <option>Colorímetro 1</option>
+          <option>Colorímetro 2</option>
+          <option>Texturómetro</option>
+          <option>Agitador Magnético</option>
+          <option>Agitador Magnetico Con Calentamiento</option>
+          <option>pH-Metro</option>
+          <option>Equipo De Electrocoagulación</option>
+          <option>Monitor</option>
+          <option>Pipeteador Recargable</option>
+          <option>Agitador De Cabezal</option>
+          <option>Cúter</option>
+          <!-- puedes seguir agregando más aquí si gustas -->
         </select>
       </div>
+
       <div>
         <label class="block font-semibold">Fecha de inicio</label>
         <input type="date" name="fecha" required class="w-full border p-2 rounded">
       </div>
+
       <div>
         <label class="block font-semibold">Hora de inicio</label>
         <input type="time" name="hora" required class="w-full border p-2 rounded">
       </div>
+
       <div>
         <label class="block font-semibold">Duración (en horas)</label>
         <input type="number" name="duracion" min="1" required class="w-full border p-2 rounded">
       </div>
+
       <div>
         <label class="block font-semibold">Tu nombre</label>
         <input type="text" name="usuario" required class="w-full border p-2 rounded">
       </div>
+
       <div>
         <label class="block font-semibold">Tu correo</label>
         <input type="email" name="correo" required class="w-full border p-2 rounded">
       </div>
+
       <div>
         <label class="block font-semibold">Observaciones (opcional)</label>
         <textarea name="observaciones" rows="3" class="w-full border p-2 rounded" placeholder="Ej: necesito crisoles, soluciones, guantes..."></textarea>
       </div>
+
       <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600">
         Reservar
       </button>
