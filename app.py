@@ -1,13 +1,15 @@
-from flask import Flask, render_template, request, redirect
+import os
 import sqlite3
+from flask import Flask, render_template, request, redirect
 
 app = Flask(__name__)
 
-with app.app_context():
-    init_db()
+# Ruta absoluta para evitar errores en entornos como Render
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "reservas.db")
 
 def init_db():
-    conn = sqlite3.connect('reservas.db')
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''
         CREATE TABLE IF NOT EXISTS reservas (
@@ -23,7 +25,7 @@ def init_db():
 
 @app.route('/')
 def index():
-    conn = sqlite3.connect('reservas.db')
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('SELECT * FROM reservas ORDER BY fecha, hora')
     reservas = c.fetchall()
@@ -38,7 +40,7 @@ def reservar():
         hora = request.form['hora']
         usuario = request.form['usuario']
 
-        conn = sqlite3.connect('reservas.db')
+        conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute('SELECT * FROM reservas WHERE equipo=? AND fecha=? AND hora=?',
                   (equipo, fecha, hora))
@@ -55,6 +57,6 @@ def reservar():
     
     return render_template('reservar.html')
 
-if __name__ == '__main__':
+# Crear la base de datos al arrancar la app
+with app.app_context():
     init_db()
-    app.run(host='0.0.0.0', port=5000)
