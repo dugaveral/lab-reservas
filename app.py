@@ -9,7 +9,6 @@ from sendgrid.helpers.mail import Mail
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev")
-
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def generar_codigo():
@@ -29,7 +28,7 @@ def enviar_correo(destinatario, codigo):
 def index():
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
-    cur.execute("SELECT equipo, inicio, fin, usuario FROM reservas ORDER BY inicio")
+    cur.execute("SELECT id, equipo, inicio, fin, usuario FROM reservas ORDER BY inicio")
     reservas = cur.fetchall()
     conn.close()
     return render_template('index.html', reservas=reservas)
@@ -57,8 +56,8 @@ def reservar():
             SELECT * FROM reservas
             WHERE equipo = %s AND (%s < fin AND %s > inicio)
         """, (equipo, fin_dt, inicio_dt))
-
         conflicto = cur.fetchone()
+
         if conflicto:
             conn.close()
             return render_template("error.html", mensaje="⚠️ Ya existe una reserva para ese equipo durante este periodo.")
@@ -77,7 +76,20 @@ def reservar():
 
         return render_template("codigo.html", codigo=codigo)
 
-    return render_template('reservar.html')
+    # Si GET, mostrar reservas agrupadas por equipo
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
+    cur.execute("SELECT equipo, inicio, fin FROM reservas ORDER BY equipo, inicio")
+    reservas_existentes = cur.fetchall()
+    conn.close()
+
+    reservas_por_equipo = {}
+    for equipo, inicio, fin in reservas_existentes:
+        if equipo not in reservas_por_equipo:
+            reservas_por_equipo[equipo] = []
+        reservas_por_equipo[equipo].append((inicio, fin))
+
+    return render_template('reservar.html', reservas_por_equipo=reservas_por_equipo)
 
 @app.route('/eliminar/<int:reserva_id>', methods=['POST'])
 def eliminar_reserva(reserva_id):
