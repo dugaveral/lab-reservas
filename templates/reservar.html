@@ -57,7 +57,7 @@
           <ul class="list-disc ml-6 text-sm">
           {% set _ = equipos_mostrados.append(r[0]) %}
         {% endif %}
-        <li>📅 {{ r[1].replace('T', ' ')[:16] }} → {{ r[2].replace('T', ' ')[:16] }} – {{ r[3] }}</li>
+        <li>📅 {{ r[1].strftime('%Y-%m-%d %H:%M') }} → {{ r[2].strftime('%Y-%m-%d %H:%M') }} – {{ r[3] }}</li>
       {% endfor %}
       </ul>
     </div>
