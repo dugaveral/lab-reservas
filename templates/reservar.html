@@ -3,15 +3,6 @@
 <head>
   <title>Reservar Equipo</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    function mostrarReservas() {
-      const equipoSeleccionado = document.getElementById("equipo").value;
-      const bloques = document.querySelectorAll(".bloque-reservas");
-      bloques.forEach(b => b.style.display = 'none');
-      const visible = document.getElementById("reservas-" + equipoSeleccionado);
-      if (visible) visible.style.display = 'block';
-    }
-  </script>
 </head>
 <body class="bg-gray-100 text-gray-800">
   <div class="max-w-4xl mx-auto p-6 bg-white shadow rounded mt-10">
@@ -23,7 +14,7 @@
     <form method="POST" class="space-y-4">
       <div>
         <label class="block font-semibold">Equipo</label>
-        <select name="equipo" id="equipo" required class="w-full border p-2 rounded" onchange="mostrarReservas()">
+        <select name="equipo" required class="w-full border p-2 rounded">
           <option disabled selected>Selecciona un equipo</option>
           {% for equipo in equipos %}
             <option value="{{ equipo }}">{{ equipo }}</option>
@@ -58,28 +49,29 @@
 
       <div>
         <label class="block font-semibold">Observaciones (opcional)</label>
-        <textarea name="observaciones" rows="3" class="w-full border p-2 rounded" placeholder="Ej: necesito crisoles, soluciones, guantes..."></textarea>
+        <textarea name="observaciones" rows="3" class="w-full border p-2 rounded" placeholder="Ej: Necesito X crisoles, soluciones, etc..."></textarea>
       </div>
 
       <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600">
         Reservar
       </button>
+
+      <div class="mt-6 text-center">
+        <a href="/reservas" class="text-blue-600 hover:underline block mb-2">🔎 Consultar reservas</a>
+        <a href="/descargar" class="text-green-600 hover:underline">📥 Descargar historial de reservas</a>
+      </div>
     </form>
 
     <div class="mt-10">
-      <h2 class="text-lg font-bold mb-2">📋 Reservas existentes del equipo seleccionado</h2>
+      <h2 class="text-lg font-bold mb-2">📋 Reservas existentes por equipo</h2>
+      {% set equipos_mostrados = [] %}
       {% for equipo, reservas in reservas_por_equipo.items() %}
-        <div id="reservas-{{ equipo }}" class="bloque-reservas hidden">
-          {% if reservas %}
-            <ul class="list-disc ml-6 text-sm">
-              {% for r in reservas %}
-                <li>📅 {{ r[0].strftime('%Y-%m-%d %H:%M') }} → {{ r[1].strftime('%Y-%m-%d %H:%M') }} – {{ r[2] }}</li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p class="ml-6 text-sm text-gray-600">Sin reservas registradas para este equipo.</p>
-          {% endif %}
-        </div>
+        <h3 class="font-semibold mt-4 mb-1 text-blue-700">{{ equipo }}</h3>
+        <ul class="list-disc ml-6 text-sm">
+          {% for inicio, fin, usuario in reservas %}
+            <li>📅 {{ inicio.strftime('%Y-%m-%d %H:%M') }} → {{ fin.strftime('%Y-%m-%d %H:%M') }} – {{ usuario }}</li>
+          {% endfor %}
+        </ul>
       {% endfor %}
     </div>
   </div>
