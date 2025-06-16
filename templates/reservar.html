@@ -3,33 +3,21 @@
 <head>
   <title>Reservar Equipo</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    function mostrarReservasEquipo() {
-      const equipoSeleccionado = document.getElementById("equipo").value;
-      const secciones = document.querySelectorAll(".reserva-equipo");
-      secciones.forEach(sec => {
-        sec.style.display = (sec.dataset.equipo === equipoSeleccionado) ? "block" : "none";
-      });
-    }
-  </script>
 </head>
 <body class="bg-gray-100 text-gray-800">
-  <div class="max-w-5xl mx-auto p-6 bg-white shadow rounded mt-10">
-
-    <div class="flex justify-center mb-6">
-      <img src="https://pades.com.co/wp-content/uploads/2024/03/cropped-cropped-Frame-36-300x234.png"
-           alt="Grupo de investigación" class="rounded shadow-md max-h-40" />
-    </div>
+  <div class="max-w-4xl mx-auto p-6 bg-white shadow rounded mt-10">
+    <img src="https://pades.com.co/wp-content/uploads/2024/03/cropped-cropped-Frame-36-300x234.png"
+         alt="Grupo de investigación" class="mx-auto mb-4 rounded shadow w-48">
 
     <h1 class="text-2xl font-bold text-center mb-6">Reservar un Equipo</h1>
 
     <form method="POST" class="space-y-4">
       <div>
         <label class="block font-semibold">Equipo</label>
-        <select name="equipo" id="equipo" required onchange="mostrarReservasEquipo()" class="w-full border p-2 rounded">
+        <select name="equipo" required class="w-full border p-2 rounded">
           <option disabled selected>Selecciona un equipo</option>
-          {% for nombre in equipos %}
-            <option value="{{ nombre }}">{{ nombre }}</option>
+          {% for eq in equipos %}
+            <option value="{{ eq }}">{{ eq }}</option>
           {% endfor %}
         </select>
       </div>
@@ -61,8 +49,7 @@
 
       <div>
         <label class="block font-semibold">Observaciones (opcional)</label>
-        <textarea name="observaciones" rows="3" class="w-full border p-2 rounded"
-                  placeholder="Ej: necesito crisoles, soluciones, guantes..."></textarea>
+        <textarea name="observaciones" rows="3" class="w-full border p-2 rounded" placeholder="Ej: necesito crisoles, soluciones, guantes..."></textarea>
       </div>
 
       <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600">
@@ -71,21 +58,16 @@
     </form>
 
     <div class="mt-10">
-      <h2 class="text-lg font-bold mb-4">📋 Reservas existentes</h2>
+      <h2 class="text-lg font-bold mb-2">📋 Reservas existentes por equipo</h2>
+      {% set equipos_mostrados = [] %}
       {% for equipo, reservas in reservas_por_equipo.items() %}
-        <div class="reserva-equipo hidden" data-equipo="{{ equipo }}">
-          <h3 class="text-blue-700 font-semibold">{{ equipo }}</h3>
-          <ul class="list-disc ml-6 text-sm">
-            {% for inicio, fin in reservas %}
-              <li>📅 {{ inicio.strftime('%Y-%m-%d %H:%M') }} → {{ fin.strftime('%Y-%m-%d %H:%M') }}</li>
-            {% endfor %}
-          </ul>
-        </div>
+        <h3 class="font-semibold mt-4 mb-1 text-blue-700">🔧 {{ equipo }}</h3>
+        <ul class="list-disc ml-6 text-sm">
+          {% for inicio, fin, usuario in reservas %}
+            <li>📅 {{ inicio.strftime('%Y-%m-%d %H:%M') }} → {{ fin.strftime('%Y-%m-%d %H:%M') }} – {{ usuario }}</li>
+          {% endfor %}
+        </ul>
       {% endfor %}
-    </div>
-
-    <div class="text-center mt-6">
-      <a href="/" class="text-blue-600 hover:underline">⬅️ Volver al inicio</a>
     </div>
   </div>
 </body>
