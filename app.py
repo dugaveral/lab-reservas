@@ -359,7 +359,7 @@ def ver_reservas():
 def descargar():
     if request.method == 'POST':
         password = request.form.get('password')
-        if password != "P4D3SRESERVAS#*":
+        if password != "P4D3SADMIN#*":
             return render_template("error.html", mensaje="❌ Contraseña incorrecta para descargar.")
 
         conn = get_db_connection()
@@ -382,6 +382,7 @@ def descargar():
         )
 
     return render_template("descargar.html")
+
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     if request.method == 'POST':
@@ -410,8 +411,8 @@ def admin_eliminar_reserva(reserva_id):
 @app.route('/admin_login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
-        clave = request.form.get('clave')
-        if clave == "P4D3SADMIN#*":
+        password = request.form.get('password')
+        if password == "P4D3SADMIN#*":
             conn = get_db_connection()
             cur = conn.cursor()
             cur.execute("SELECT id, equipo, inicio, fin, usuario FROM reservas ORDER BY inicio")
@@ -419,7 +420,7 @@ def admin_login():
             conn.close()
             return render_template("ver_reservas.html", reservas=reservas, admin=True)
         else:
-            return render_template("error.html", mensaje="❌ Clave incorrecta.")
+            return render_template("error.html", mensaje="❌ Contraseña incorrecta para el modo administrador.")
     return render_template("admin_login.html")
 
 if __name__ == '__main__':
