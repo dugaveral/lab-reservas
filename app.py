@@ -172,7 +172,6 @@ EQUIPOS_LISTA = [
   "Reactor",
   "Reactor Con Agitación",
   "Reactor Multipropósito",
-  "Pirólisis",
   "Refractómetro Digital",
   "Refractómetro Digital 2",
   "Regulador De Voltaje",
@@ -203,7 +202,6 @@ EQUIPOS_LISTA = [
   "Zaranda",
   "Zaranda 2"
 ]
-
 
 def generar_codigo():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
@@ -301,7 +299,7 @@ def reservar():
     for equipo, inicio, fin, usuario in registros:
         reservas_por_equipo.setdefault(equipo, []).append((inicio, fin, usuario))
 
-    return render_template('reservar.html', equipos=EQUIPOS_LISTA, reservas_por_equipo=reservas_por_equipo)
+    return render_template('reservar.html', equipos=[], reservas_por_equipo=reservas_por_equipo)
 
 @app.route('/reservas')
 def ver_reservas():
@@ -335,7 +333,7 @@ def ver_reservas():
     if semana_inicio and semana_fin:
         try:
             inicio_dt = datetime.strptime(semana_inicio, "%Y-%m-%d")
-            fin_dt = datetime.strptime(semana_fin, "%Y-%m-%d") + timedelta(days=1)  # incluir fin del día
+            fin_dt = datetime.strptime(semana_fin, "%Y-%m-%d") + timedelta(days=1)
             query += " AND inicio >= %s AND inicio < %s"
             params.extend([inicio_dt, fin_dt])
         except ValueError:
@@ -350,10 +348,6 @@ def ver_reservas():
     conn.close()
 
     return render_template("ver_reservas.html", reservas=reservas, admin=session.get('admin'))
-
-from openpyxl import Workbook
-from openpyxl.utils import get_column_letter
-from io import BytesIO
 
 @app.route('/eliminar/<int:reserva_id>', methods=['POST'])
 def eliminar_reserva(reserva_id):
@@ -445,6 +439,18 @@ def admin():
     reservas = cur.fetchall()
     conn.close()
     return render_template("ver_reservas.html", reservas=reservas, admin=True)
+
+@app.route('/admin/eliminar/<int:reserva_id>', methods=['POST'])
+def admin_eliminar_reserva(reserva_id):
+    if not session.get('admin'):
+        return redirect('/admin_login')
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM reservas WHERE id = %s', (reserva_id,))
+    conn.commit()
+    conn.close()
+    return redirect('/admin')
 
 @app.route('/admin_logout')
 def admin_logout():
