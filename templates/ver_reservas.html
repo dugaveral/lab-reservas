@@ -4,46 +4,32 @@
   <meta charset="UTF-8">
   <title>Consultar Reservas</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    function filtrar() {
-      let inputEquipo = document.getElementById("filtroEquipo").value.toLowerCase();
-      let inputUsuario = document.getElementById("filtroUsuario").value.toLowerCase();
-      let inputFecha = document.getElementById("filtroFecha").value;
-      let filas = document.querySelectorAll("#tablaReservas tbody tr");
-
-      filas.forEach(fila => {
-        let equipo = fila.querySelector(".equipo").textContent.toLowerCase();
-        let usuario = fila.querySelector(".usuario").textContent.toLowerCase();
-        let fecha = fila.querySelector(".fecha").textContent;
-
-        let visible =
-          equipo.includes(inputEquipo) &&
-          usuario.includes(inputUsuario) &&
-          (inputFecha === "" || fecha.startsWith(inputFecha));
-
-        fila.style.display = visible ? "" : "none";
-      });
-    }
-  </script>
 </head>
 <body class="bg-gray-100 text-gray-800">
   <div class="max-w-7xl mx-auto p-6 bg-white shadow rounded mt-10">
     <h1 class="text-2xl font-bold text-center mb-6">📋 Consultar Reservas</h1>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <form method="GET" action="/reservas" class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
       <div>
         <label class="block font-semibold">Filtrar por equipo</label>
-        <input type="text" id="filtroEquipo" onkeyup="filtrar()" placeholder="Nombre del equipo" class="w-full border p-2 rounded">
+        <input type="text" name="equipo" placeholder="Nombre del equipo" class="w-full border p-2 rounded">
       </div>
       <div>
         <label class="block font-semibold">Filtrar por responsable</label>
-        <input type="text" id="filtroUsuario" onkeyup="filtrar()" placeholder="Nombre del responsable" class="w-full border p-2 rounded">
+        <input type="text" name="usuario" placeholder="Nombre del responsable" class="w-full border p-2 rounded">
       </div>
       <div>
-        <label class="block font-semibold">Filtrar por fecha</label>
-        <input type="date" id="filtroFecha" onchange="filtrar()" class="w-full border p-2 rounded">
+        <label class="block font-semibold">Semana inicio</label>
+        <input type="date" name="semana_inicio" class="w-full border p-2 rounded">
       </div>
-    </div>
+      <div>
+        <label class="block font-semibold">Semana fin</label>
+        <input type="date" name="semana_fin" class="w-full border p-2 rounded">
+      </div>
+      <div class="flex items-end">
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full">🔍 Consultar</button>
+      </div>
+    </form>
 
     <div class="overflow-x-auto">
       <table id="tablaReservas" class="min-w-full bg-white border border-gray-300">
@@ -62,55 +48,36 @@
           {% for r in reservas %}
           <tr class="border-t">
             <td class="px-4 py-2 equipo">{{ r[1] }}</td>
-            <td class="px-4 py-2 fecha">
-              {% if r[2] is string %}
-                {{ r[2][:16].replace('T', ' ') }}
-              {% else %}
-                {{ r[2].strftime('%Y-%m-%d %H:%M') }}
-              {% endif %}
-            </td>
-            <td class="px-4 py-2">
-              {% if r[3] is string %}
-                {{ r[3][:16].replace('T', ' ') }}
-              {% else %}
-                {{ r[3].strftime('%Y-%m-%d %H:%M') }}
-              {% endif %}
-            </td>
+            <td class="px-4 py-2 fecha">{{ r[2] }}</td>
+            <td class="px-4 py-2">{{ r[3] }}</td>
             <td class="px-4 py-2 usuario">{{ r[4] }}</td>
             <td class="px-4 py-2">{{ r[5] or '' }}</td>
+            <td class="px-4 py-2">{{ r[6] }}</td>
             <td class="px-4 py-2">
-              {% if r[6] is string %}
-                {{ r[6][:16].replace('T', ' ') }}
-              {% else %}
-                {{ r[6].strftime('%Y-%m-%d %H:%M') }}
-              {% endif %}
-            </td>
-            {% if admin %}
-            <td class="px-4 py-2">
+              {% if admin %}
               <form method="POST" action="/admin/eliminar/{{ r[0] }}">
                 <button type="submit" class="text-red-600 hover:underline">❌ Eliminar</button>
               </form>
-            </td>
-            {% else %}
-            <td class="px-4 py-2">
+              {% else %}
               <form method="POST" action="/eliminar/{{ r[0] }}" class="flex gap-2">
                 <input type="text" name="codigo" placeholder="Código" class="border p-1 rounded w-24" required>
                 <button type="submit" class="text-red-600 hover:underline">❌</button>
               </form>
+              {% endif %}
             </td>
-            {% endif %}
           </tr>
           {% else %}
           <tr>
-            <td class="px-4 py-2 text-center text-gray-500" colspan="7">No hay reservas registradas.</td>
+            <td colspan="7" class="px-4 py-2 text-center text-gray-500">No hay reservas registradas.</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+
     <div class="text-center mt-6 space-x-4">
       <a href="/reservar" class="text-blue-600 hover:underline font-medium">🔙 Volver a reservar</a>
-      <a href="/descargar" class="text-green-600 hover:underline font-medium"⬇️ Descargar reservas</a>
+      <a href="/descargar" class="text-green-600 hover:underline font-medium">⬇️ Descargar reservas</a>
       <a href="/admin_login" class="text-red-600 hover:underline font-medium">🔐 Modo administrador</a>
     </div>
   </div>

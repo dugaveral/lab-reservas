@@ -316,6 +316,7 @@ def ver_reservas():
                TO_CHAR(inicio, 'YYYY-MM-DD HH24:MI'),
                TO_CHAR(fin, 'YYYY-MM-DD HH24:MI'),
                usuario,
+               observaciones,
                TO_CHAR(creado_en, 'YYYY-MM-DD HH24:MI')
         FROM reservas
         WHERE TRUE
@@ -329,11 +330,16 @@ def ver_reservas():
         query += " AND usuario ILIKE %s"
         params.append(f"%{filtro_usuario}%")
     if filtro_fecha:
-        query += " AND CAST(inicio AS DATE) = %s"
+        query += " AND DATE(inicio) = %s"
         params.append(filtro_fecha)
     if semana_inicio and semana_fin:
-        query += " AND inicio BETWEEN %s AND %s"
-        params.extend([semana_inicio, semana_fin])
+        try:
+            inicio_dt = datetime.strptime(semana_inicio, "%Y-%m-%d")
+            fin_dt = datetime.strptime(semana_fin, "%Y-%m-%d") + timedelta(days=1)  # incluir fin del día
+            query += " AND inicio >= %s AND inicio < %s"
+            params.extend([inicio_dt, fin_dt])
+        except ValueError:
+            return render_template("error.html", mensaje="❌ Fechas inválidas.")
 
     query += " ORDER BY inicio"
 
@@ -343,7 +349,7 @@ def ver_reservas():
     reservas = cur.fetchall()
     conn.close()
 
-    return render_template("ver_reservas.html", reservas=reservas)
+    return render_template("ver_reservas.html", reservas=reservas, admin=session.get('admin'))
 
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
