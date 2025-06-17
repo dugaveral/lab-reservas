@@ -2,3 +2,4 @@ Flask
 gunicorn
 sendgrid
 psycopg2-binary
+openpyxl
