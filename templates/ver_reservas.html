@@ -55,9 +55,7 @@
             <th class="px-4 py-2 text-left">Responsable</th>
             <th class="px-4 py-2 text-left">Observaciones</th>
             <th class="px-4 py-2 text-left">Creada el</th>
-            {% if admin %}
             <th class="px-4 py-2 text-left">Eliminar</th>
-            {% endif %}
           </tr>
         </thead>
         <tbody>
@@ -79,18 +77,25 @@
               {% endif %}
             </td>
             <td class="px-4 py-2 usuario">{{ r[4] }}</td>
+            <td class="px-4 py-2">{{ r[5] or '' }}</td>
             <td class="px-4 py-2">
-              {% if r[5] is string %}
-                {{ r[5][:16].replace('T', ' ') }}
+              {% if r[6] is string %}
+                {{ r[6][:16].replace('T', ' ') }}
               {% else %}
-                {{ r[5].strftime('%Y-%m-%d %H:%M') }}
+                {{ r[6].strftime('%Y-%m-%d %H:%M') }}
               {% endif %}
             </td>
-            <td class="px-4 py-2">{{ r[6] or '' }}</td>
             {% if admin %}
             <td class="px-4 py-2">
               <form method="POST" action="/admin/eliminar/{{ r[0] }}">
                 <button type="submit" class="text-red-600 hover:underline">❌ Eliminar</button>
+              </form>
+            </td>
+            {% else %}
+            <td class="px-4 py-2">
+              <form method="POST" action="/eliminar/{{ r[0] }}" class="flex gap-2">
+                <input type="text" name="codigo" placeholder="Código" class="border p-1 rounded w-24" required>
+                <button type="submit" class="text-red-600 hover:underline">❌</button>
               </form>
             </td>
             {% endif %}
@@ -103,10 +108,9 @@
         </tbody>
       </table>
     </div>
-
     <div class="text-center mt-6 space-x-4">
       <a href="/reservar" class="text-blue-600 hover:underline font-medium">🔙 Volver a reservar</a>
-      <a href="/descargar" class="text-green-600 hover:underline font-medium">⬇️ Descargar reservas</a>
+      <a href="/descargar" class="text-green-600 hover:underline font-medium"⬇️ Descargar reservas</a>
       <a href="/admin_login" class="text-red-600 hover:underline font-medium">🔐 Modo administrador</a>
     </div>
   </div>

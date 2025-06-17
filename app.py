@@ -347,7 +347,7 @@ def ver_reservas():
 
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
-from openpyxl.writer.excel import save_virtual_workbook
+from io import BytesIO
 
 @app.route('/descargar', methods=['GET', 'POST'])
 def descargar():
@@ -365,28 +365,28 @@ def descargar():
         rows = cur.fetchall()
         conn.close()
 
-        # Crear libro de Excel
         wb = Workbook()
         ws = wb.active
         ws.title = "Reservas"
 
-        # Escribir encabezados
-        headers = ['ID', 'Equipo', 'Inicio', 'Fin', 'Responsable', 'Observaciones', 'Creado en']
-        ws.append(headers)
+        encabezados = ['ID', 'Equipo', 'Inicio', 'Fin', 'Responsable', 'Observaciones', 'Creado en']
+        ws.append(encabezados)
 
-        # Escribir datos
-        for row in rows:
-            ws.append(row)
+        for fila in rows:
+            ws.append(fila)
 
-        # Generar archivo para respuesta
-        response = Response(
-            save_virtual_workbook(wb),
+        for i, _ in enumerate(encabezados, 1):
+            ws.column_dimensions[get_column_letter(i)].width = 20
+
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        return Response(
+            output,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            headers={
-                "Content-Disposition": "attachment; filename=reservas.xlsx"
-            }
+            headers={"Content-Disposition": "attachment; filename=reservas.xlsx"}
         )
-        return response
 
     return render_template("descargar.html")
 
