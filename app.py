@@ -299,7 +299,7 @@ def reservar():
     for equipo, inicio, fin, usuario in registros:
         reservas_por_equipo.setdefault(equipo, []).append((inicio, fin, usuario))
 
-    return render_template('reservar.html', equipos=[], reservas_por_equipo=reservas_por_equipo)
+    return render_template('reservar.html', equipos=EQUIPOS_LISTA, reservas_por_equipo=reservas_por_equipo)
 
 @app.route('/reservas')
 def ver_reservas():
@@ -443,7 +443,7 @@ def admin():
 @app.route('/admin/eliminar/<int:reserva_id>', methods=['POST'])
 def admin_eliminar_reserva(reserva_id):
     if not session.get('admin'):
-        return redirect('/admin_login')
+        return redirect('/admin_login') 
 
     conn = get_db_connection()
     cur = conn.cursor()
