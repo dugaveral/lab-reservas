@@ -8,6 +8,10 @@ import random
 import string
 import sendgrid
 from sendgrid.helpers.mail import Mail
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+from io import BytesIO
+
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "laboratorio-reservas-pades"

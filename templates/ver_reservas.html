@@ -79,6 +79,9 @@
       <a href="/reservar" class="text-blue-600 hover:underline font-medium">🔙 Volver a reservar</a>
       <a href="/descargar" class="text-green-600 hover:underline font-medium">⬇️ Descargar reservas</a>
       <a href="/admin_login" class="text-red-600 hover:underline font-medium">🔐 Modo administrador</a>
+      {% if admin %}
+        <a href="/admin_logout" class="text-gray-600 hover:underline font-medium">🚪 Cerrar sesión</a>
+      {% endif %}
     </div>
   </div>
 </body>
