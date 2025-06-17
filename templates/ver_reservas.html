@@ -27,7 +27,7 @@
   </script>
 </head>
 <body class="bg-gray-100 text-gray-800">
-  <div class="max-w-6xl mx-auto p-6 bg-white shadow rounded mt-10">
+  <div class="max-w-7xl mx-auto p-6 bg-white shadow rounded mt-10">
     <h1 class="text-2xl font-bold text-center mb-6">📋 Consultar Reservas</h1>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -36,8 +36,8 @@
         <input type="text" id="filtroEquipo" onkeyup="filtrar()" placeholder="Nombre del equipo" class="w-full border p-2 rounded">
       </div>
       <div>
-        <label class="block font-semibold">Filtrar por usuario</label>
-        <input type="text" id="filtroUsuario" onkeyup="filtrar()" placeholder="Nombre del usuario" class="w-full border p-2 rounded">
+        <label class="block font-semibold">Filtrar por responsable</label>
+        <input type="text" id="filtroUsuario" onkeyup="filtrar()" placeholder="Nombre del responsable" class="w-full border p-2 rounded">
       </div>
       <div>
         <label class="block font-semibold">Filtrar por fecha</label>
@@ -52,7 +52,9 @@
             <th class="px-4 py-2 text-left">Equipo</th>
             <th class="px-4 py-2 text-left">Inicio</th>
             <th class="px-4 py-2 text-left">Fin</th>
-            <th class="px-4 py-2 text-left">Usuario</th>
+            <th class="px-4 py-2 text-left">Responsable</th>
+            <th class="px-4 py-2 text-left">Observaciones</th>
+            <th class="px-4 py-2 text-left">Creada el</th>
             {% if admin %}
             <th class="px-4 py-2 text-left">Eliminar</th>
             {% endif %}
@@ -77,6 +79,14 @@
               {% endif %}
             </td>
             <td class="px-4 py-2 usuario">{{ r[4] }}</td>
+            <td class="px-4 py-2">
+              {% if r[5] is string %}
+                {{ r[5][:16].replace('T', ' ') }}
+              {% else %}
+                {{ r[5].strftime('%Y-%m-%d %H:%M') }}
+              {% endif %}
+            </td>
+            <td class="px-4 py-2">{{ r[6] or '' }}</td>
             {% if admin %}
             <td class="px-4 py-2">
               <form method="POST" action="/admin/eliminar/{{ r[0] }}">
@@ -87,7 +97,7 @@
           </tr>
           {% else %}
           <tr>
-            <td class="px-4 py-2 text-center text-gray-500" colspan="5">No hay reservas registradas.</td>
+            <td class="px-4 py-2 text-center text-gray-500" colspan="7">No hay reservas registradas.</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -97,11 +107,7 @@
     <div class="text-center mt-6 space-x-4">
       <a href="/reservar" class="text-blue-600 hover:underline font-medium">🔙 Volver a reservar</a>
       <a href="/descargar" class="text-green-600 hover:underline font-medium">⬇️ Descargar reservas</a>
-      {% if not admin %}
-        <a href="/admin_login" class="text-red-600 hover:underline font-medium">🔐 Modo administrador</a>
-      {% else %}
-        <a href="/admin_logout" class="text-red-600 hover:underline font-medium">🚪 Cerrar sesión administrador</a>
-      {% endif %}
+      <a href="/admin_login" class="text-red-600 hover:underline font-medium">🔐 Modo administrador</a>
     </div>
   </div>
 </body>
