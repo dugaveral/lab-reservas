@@ -27,7 +27,7 @@
         <input type="date" name="semana_fin" class="w-full border p-2 rounded">
       </div>
       <div class="flex items-end">
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full">🔍 Consultar</button>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded w-full">🔎 Buscar</button>
       </div>
     </form>
 
@@ -47,10 +47,10 @@
         <tbody>
           {% for r in reservas %}
           <tr class="border-t">
-            <td class="px-4 py-2 equipo">{{ r[1] }}</td>
-            <td class="px-4 py-2 fecha">{{ r[2] }}</td>
+            <td class="px-4 py-2">{{ r[1] }}</td>
+            <td class="px-4 py-2">{{ r[2] }}</td>
             <td class="px-4 py-2">{{ r[3] }}</td>
-            <td class="px-4 py-2 usuario">{{ r[4] }}</td>
+            <td class="px-4 py-2">{{ r[4] }}</td>
             <td class="px-4 py-2">{{ r[5] or '' }}</td>
             <td class="px-4 py-2">{{ r[6] }}</td>
             <td class="px-4 py-2">

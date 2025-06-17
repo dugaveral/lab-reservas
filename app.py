@@ -355,6 +355,25 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from io import BytesIO
 
+@app.route('/eliminar/<int:reserva_id>', methods=['POST'])
+def eliminar_reserva(reserva_id):
+    codigo = request.form['codigo'].strip().upper()
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT codigo FROM reservas WHERE id = %s', (reserva_id,))
+    resultado = cur.fetchone()
+
+    if resultado and resultado[0].strip().upper() == codigo:
+        cur.execute('DELETE FROM reservas WHERE id = %s', (reserva_id,))
+        conn.commit()
+        mensaje = "✅ Reserva eliminada exitosamente."
+    else:
+        mensaje = "❌ Código incorrecto. No puedes eliminar esta reserva."
+
+    conn.close()
+    return render_template("error.html", mensaje=mensaje)
+
 @app.route('/descargar', methods=['GET', 'POST'])
 def descargar():
     if request.method == 'POST':
@@ -395,6 +414,42 @@ def descargar():
         )
 
     return render_template("descargar.html")
+
+@app.route('/admin_login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        password = request.form.get('password')
+        if password.strip() == "P4D3SADMIN#*":
+            session['admin'] = True
+            return redirect('/admin')
+        else:
+            return render_template("error.html", mensaje="❌ Contraseña incorrecta.")
+    return render_template("admin_login.html")
+
+@app.route('/admin')
+def admin():
+    if not session.get('admin'):
+        return redirect('/admin_login')
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, equipo,
+               TO_CHAR(inicio, 'YYYY-MM-DD HH24:MI'),
+               TO_CHAR(fin, 'YYYY-MM-DD HH24:MI'),
+               usuario, observaciones,
+               TO_CHAR(creado_en, 'YYYY-MM-DD HH24:MI')
+        FROM reservas
+        ORDER BY inicio
+    """)
+    reservas = cur.fetchall()
+    conn.close()
+    return render_template("ver_reservas.html", reservas=reservas, admin=True)
+
+@app.route('/admin_logout')
+def admin_logout():
+    session.pop('admin', None)
+    return redirect('/reservas')
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
